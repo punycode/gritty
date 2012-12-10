@@ -1,0 +1,48 @@
+require 'spec_helper'
+
+module Rugged
+    describe Repository do
+        include_context 'with repository', :all
+
+        describe '#rev_parse_git' do
+            subject { repository.rev_parse_git("v1.0~3..v1.0") }
+
+            it { should contain_commit(/^\^0b53bc9c/) }
+            it { should contain_commit(/^a1a0f753/) }
+            it { should_not contain_commit("v1.0") }
+            it { should have(2).items }
+
+            describe '#rev_parse_git("v1.0")' do
+                subject { repository.rev_parse_git("v1.0") }
+
+                it { should contain_commit(/^a1a0f753/) }
+            end
+        end
+
+        describe '#walk_with' do
+            subject { repository.walk_with }
+
+            it { should be_kind_of(Enumerator) }
+            it { should have_at_least(6).items }
+            it { should contain_commit(/^15f810ee/) }
+
+            describe '#walk_with(&block)' do
+                subject { repository }
+                specify { expect { |b| repository.walk_with(&b) }.to contain_commit(/^268b067e/) }
+                specify { expect { |b| repository.walk_with(&b) }.to contain_commit(/^15f810ee/) }
+            end
+
+            describe '#walk_with("v1.0")' do
+                subject { repository.walk_with("v1.0") }
+
+                it { should have(6).items }
+                it { should contain_commit(/^268b067e/) }
+                it { should contain_commit(/^15f810ee/) }
+            end
+        end
+
+
+    end
+end
+
+# vim:ts=4 sw=4 filetype=ruby syntax=ruby

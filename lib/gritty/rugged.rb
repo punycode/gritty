@@ -36,14 +36,17 @@ module Rugged
 
         def walker_with(*refspecs)
             options = refspecs.last.is_a?(Hash) ? refspecs.pop : {}
-            refs = rev_parse_git(refspecs) || ["HEAD"]
+            refs = rev_parse_git(refspecs)
+            refs << rev_parse_oid("HEAD") if refs.empty?
             walker = Rugged::Walker.new self
             walker.sorting(options[:sorting] || (Rugged::SORT_TOPO | Rugged::SORT_REVERSE))
             refs.each do |ref|
+                resolved = lookup(ref)
+                resolved = resolved.target unless resolved.is_a?(Commit)
                 if ref.start_with? "^"
-                    walker.hide(ref[1..-1])
+                    walker.hide(resolved)
                 else
-                    walker.push(ref)
+                    walker.push(resolved)
                 end
             end
             walker
