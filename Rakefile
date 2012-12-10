@@ -35,6 +35,7 @@ gem 'rdoc' # we need the installed RDoc gem, not the system one
 require 'rdoc/task'
 
 CLEAN << 'pkg/'
+CLEAN << 'tmp/'
 
 namespace :test do
     Rake::TestTask.new(:test) do |t|
