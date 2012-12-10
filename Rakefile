@@ -30,32 +30,39 @@ require 'rake/testtask'
 
 require 'cucumber'
 require 'cucumber/rake/task'
+require 'rspec/core/rake_task'
 gem 'rdoc' # we need the installed RDoc gem, not the system one
 require 'rdoc/task'
 
-include Rake::DSL
+CLEAN << 'pkg/'
+
+namespace :test do
+    Rake::TestTask.new(:test) do |t|
+      t.pattern = 'test/tc_*.rb'
+    end
+
+    RSpec::Core::RakeTask.new(:spec) do |t|
+        t.pattern = 'spec/**/*{_spec.rb,.rspec}'
+    end
+
+    CUKE_RESULTS = 'results.html'
+    Cucumber::Rake::Task.new(:features) do |t|
+      t.cucumber_opts = "features --format html -o #{CUKE_RESULTS} --format pretty --no-source -x"
+      t.fork = false
+    end
+    CLEAN << CUKE_RESULTS
+end
+desc "Run tests & specs (no features)."
+task :test => [ 'test:test', 'test:spec' ]
+
+namespace :doc do
+    Rake::RDocTask.new do |rd|
+      rd.main = "README.rdoc"
+      rd.rdoc_files.include("README.rdoc","lib/**/*.rb","bin/**/*")
+    end
+end
 
 Bundler::GemHelper.install_tasks
 
-
-Rake::TestTask.new do |t|
-  t.pattern = 'test/tc_*.rb'
-end
-
-
-CUKE_RESULTS = 'results.html'
-CLEAN << CUKE_RESULTS
-Cucumber::Rake::Task.new(:features) do |t|
-  t.cucumber_opts = "features --format html -o #{CUKE_RESULTS} --format pretty --no-source -x"
-  t.fork = false
-end
-
-Rake::RDocTask.new do |rd|
-  
-  rd.main = "README.rdoc"
-  
-  rd.rdoc_files.include("README.rdoc","lib/**/*.rb","bin/**/*")
-end
-
-task :default => [:test,:features]
+task :default => [:test, :build]
 
